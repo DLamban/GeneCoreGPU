@@ -31,8 +31,41 @@ typedef struct chromatid {
 		chromatid dadChromatid;
 	}chromosome;
 	
+/*int rand(int* seed) // 1 <= *seed < m
+{
+    int const a = 16807; //ie 7**5
+    int const m = 2147483647; //ie 2**31-1
+
+    *seed = (long(*seed * a))%m;
+    return(*seed);
+}*/
+
+typedef struct{ uint x; uint c; } mwc64x_state_t;
+
+
+uint MWC64X(uint2 *state)
+{
+    enum { A=4294883355U};
+    uint x=(*state).x, c=(*state).y;  // Unpack the state
+    uint res=x^c;                     // Calculate the result
+    uint hi=mul_hi(x,A);              // Step the RNG
+    x=x*A+c;
+    c=hi+(x<c);
+    *state=(uint2)(x,c);               // Pack the state back up
+    return res;                       // Return the next result
+}
 //__kernel void Add(read_only image2d_t imageA, write_only image2d_t imageC)
 __kernel void Add(__global struct chromosome *_chromosome) {
+	//int global_id = get_global_id(1) * get_global_size(0) + get_global_id(0); // Get the global id in 1D.
+	
+    // Since the Park-Miller PRNG generates a SEQUENCE of random numbers
+    // we have to keep track of the previous random number, because the next
+    // random number will be generated using the previous one.
+    //int seed = seed_memory[global_id];
+
+    //int random_number = rand(&seed); // Generate the next random number in the sequence.
+
+    //seed_memory[global_id] = *seed; // Save the seed for the next time this kernel gets enqueued.
 	// Custom Dani code, 
 	// defining my crazy structs
 	// I''m screwed trying to debug the kernel
@@ -45,8 +78,20 @@ __kernel void Add(__global struct chromosome *_chromosome) {
 	chromosome chromosome1;
 	chromosome1.dadChromatid = dadChromatid;
 	chromosome1.momChromatid = dadChromatid;*/
+
+	
 	const int x = get_global_id(0);
-	_chromosome[0].dadChromatid.geneId[x]++;
+	const int y = get_global_id(1);
+	mwc64x_state_t rng={x,y};
+	uint numram=MWC64X(&rng);
+	numram=MWC64X(&rng);	
+	numram=MWC64X(&rng);
+	
+	_chromosome[y].dadChromatid.geneId[x] = numram %20;
+	//uint2 state = new uint2(x,y);
+	//_chromosome[y].dadChromatid.geneId[x] = rand(vec2(x,y));
+	//_chromosome[y].dadChromatid.geneId[x] = _chromosome[y].dadChromatid.geneId[x] * _chromosome[y].momChromatid.geneId[x];
+	
 //	printf("%d\\r\\n", _chromosome[0].dadChromatid.geneId[x]);  	//create stupid chromatid
 
 	//chromatid = new chromatidType()

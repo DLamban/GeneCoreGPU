@@ -31,6 +31,7 @@
 
 //for perf. counters
 #include <Windows.h>
+#include <time.h>
 
 
 // Macros for OpenCL versions
@@ -476,22 +477,28 @@ int GetPlatformAndDeviceVersion (cl_platform_id platformId, ocl_args_d_t *ocl)
  */
 void generateInput(chromosome* inputArray, cl_uint chromosomeArraySize)
 {
-    srand(12345);
+    srand(time(0));
 	// example settings
 	chromatid dadChromatid;
 	chromatid momChromatid;
-	for (cl_uint i = 0; i < chromatidSize; ++i) {
-		dadChromatid.geneId[i] = rand() % 100;
-		momChromatid.geneId[i] = rand() % 100;
-	}
-	chromosome chromosome1;
-	chromosome1.dadChromatid = dadChromatid;
-	chromosome1.momChromatid = momChromatid;
+    
+
+    for (cl_uint n = 0; n < chromosomeArraySize; ++n) {
+        chromosome chromosome1;
+        for (cl_uint i = 0; i < chromatidSize; ++i) {
+            dadChromatid.geneId[i] = rand() % 10;
+            momChromatid.geneId[i] = rand() % 10;            
+        }   
+        chromosome1.dadChromatid = dadChromatid;
+        chromosome1.momChromatid = momChromatid;
+        inputArray[n] = chromosome1;
+
+    }
+	
+	
 	//printf("%d", chromosome1.dadChromatid.geneId[0]);
     // random initialization of input
-    for (cl_uint i = 0; i < chromosomeArraySize; ++i){
-		inputArray[i] = chromosome1;
-    }
+    
 }
 
 
@@ -849,7 +856,15 @@ int _tmain(int argc, TCHAR* argv[])
 
     //random input
     generateInput(inputA, chromosomeArraySize);
-	printf("%d", inputA[0].dadChromatid.geneId[0]);
+	printf("%d", inputA[10].dadChromatid.geneId[10]);
+    printf("\n");
+    printf("%d", inputA[10].momChromatid.geneId[10]);
+    printf("\n");
+   /* printf("\n");
+    printf("%d", inputA[1].dadChromatid.geneId[0]);
+    printf("\n");
+    printf("%d", inputA[1].dadChromatid.geneId[1]);
+    printf("\n");*/
    // generateInput(inputB, arrayWidth, arrayHeight);
 
     // Create OpenCL buffers from host memory
@@ -873,8 +888,7 @@ int _tmain(int argc, TCHAR* argv[])
     {
         LogError("Error: clCreateKernel returned %s\n", TranslateOpenCLError(err));
         return -1;
-    }
-
+    }    
     // Passing arguments into OpenCL kernel.
     if (CL_SUCCESS != SetKernelArguments(&ocl))
     {
@@ -895,6 +909,7 @@ int _tmain(int argc, TCHAR* argv[])
     if (queueProfilingEnable)
         QueryPerformanceCounter(&performanceCountNDRangeStart);
     // Execute (enqueue) the kernel
+   
     if (CL_SUCCESS != ExecuteAddKernel(&ocl, chromosomeArraySize))
     {
         return -1;
@@ -905,7 +920,21 @@ int _tmain(int argc, TCHAR* argv[])
     // The last part of this function: getting processed results back.
     // use map-unmap sequence to update original memory area with output buffer.
     ReadAndVerify(&ocl, chromosomeArraySize, inputA);
-
+    printf("%d", inputA[10].dadChromatid.geneId[10]);
+    printf("\n");
+    printf("%d", inputA[10].dadChromatid.geneId[11]);
+    printf("\n");
+    printf("%d", inputA[10].dadChromatid.geneId[12]);
+    printf("\n");
+    printf("%d", inputA[10].dadChromatid.geneId[13]);
+    printf("\n");
+    printf("%d", inputA[11].dadChromatid.geneId[13]);
+    printf("\n");
+    printf("%d", inputA[12].dadChromatid.geneId[13]);
+    printf("\n");
+    printf("%d", inputA[9].dadChromatid.geneId[3]);
+    printf("\n");
+    
     // retrieve performance counter frequency
     if (queueProfilingEnable)
     {
